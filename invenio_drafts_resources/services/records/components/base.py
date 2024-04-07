@@ -9,13 +9,15 @@
 
 """Base class for service components."""
 from invenio_i18n import gettext as _
-from invenio_records_resources.services.files.transfer import TransferType
 from invenio_records_resources.services.records.components import (
     BaseRecordFilesComponent as _BaseRecordFilesComponent,
 )
 from invenio_records_resources.services.records.components import (
     ServiceComponent as BaseServiceComponent,
 )
+from invenio_records_resources.proxies import current_transfer_registry
+from invenio_records_resources.services.files.transfer import TransferStatus
+
 from marshmallow import ValidationError
 
 
@@ -236,8 +238,8 @@ class BaseRecordFilesComponent(ServiceComponent, _BaseRecordFilesComponent):
         has_attached_object = file_record.file is not None
         if not has_attached_object:
             return False
-        transfer = TransferType(file_record.file.storage_class)
-        if transfer.is_completed:
+        transfer = current_transfer_registry.get_transfer(file_record=file_record)
+        if transfer.status == TransferStatus.COMPLETED:
             return True
 
     def publish(self, identity, draft=None, record=None):
